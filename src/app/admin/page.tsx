@@ -10,6 +10,11 @@ interface Produto {
 }
 
 export default function AdminPanel() {
+  // --- SISTEMA DE LOGIN (MVP) ---
+  const [autenticado, setAutenticado] = useState(false);
+  const [senhaDigitada, setSenhaDigitada] = useState('');
+  const senhaCorreta = 'padaria123'; // Senha de acesso do dono
+
   const [produtos, setProdutos] = useState<Produto[]>([
     { id: 1, nome: 'Pão Francês', preco: 0.50 }
   ]);
@@ -20,20 +25,26 @@ export default function AdminPanel() {
     if (dadosSalvos) setProdutos(JSON.parse(dadosSalvos));
   }, []);
 
+  const fazerLogin = () => {
+    if (senhaDigitada === senhaCorreta) {
+      setAutenticado(true);
+    } else {
+      alert('❌ Senha incorreta! Acesso negado.');
+      setSenhaDigitada('');
+    }
+  };
+
   const salvarCardapio = () => {
-    // VALIDAÇÃO ANTES DE SALVAR
     for (let produto of produtos) {
       if (!produto.nome.trim()) {
         alert('⚠️ Ops! Todos os produtos precisam ter um nome preenchido.');
-        return; // Interrompe o salvamento
+        return; 
       }
       if (produto.preco <= 0) {
         alert(`⚠️ O produto "${produto.nome}" não pode custar R$ 0,00.`);
-        return; // Interrompe o salvamento
+        return; 
       }
     }
-
-    // Se passou pelas travas, salva!
     localStorage.setItem('cardapioPadariaReal', JSON.stringify(produtos));
     alert('✅ Cardápio salvo com sucesso!');
   };
@@ -66,12 +77,45 @@ export default function AdminPanel() {
   const corInputBorda = isDark ? '#444444' : '#ccc';
   const corPrecoBg = isDark ? '#2a2a2a' : '#eee';
 
+  // --- TELA DE BLOQUEIO ---
+  if (!autenticado) {
+    return (
+      <main style={{ padding: '20px', fontFamily: 'sans-serif', backgroundColor: '#f4f4f4', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ backgroundColor: '#fff', padding: '30px', borderRadius: '10px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', textAlign: 'center', maxWidth: '350px', width: '100%' }}>
+          <h1 style={{ color: '#b30000', margin: '0 0 10px 0', fontSize: '24px' }}>🔒 Área Restrita</h1>
+          <p style={{ color: '#666', marginBottom: '20px', fontSize: '14px' }}>Digite a senha administrativa para gerenciar o cardápio da Padaria Real.</p>
+          
+          <input 
+            type="password" 
+            value={senhaDigitada}
+            onChange={(e) => setSenhaDigitada(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && fazerLogin()} // Faz login se apertar Enter
+            placeholder="Digite a senha..."
+            style={{ width: '100%', padding: '12px', borderRadius: '5px', border: '1px solid #ccc', marginBottom: '15px', boxSizing: 'border-box', fontSize: '16px', textAlign: 'center' }}
+          />
+          
+          <button 
+            onClick={fazerLogin}
+            style={{ width: '100%', padding: '12px', backgroundColor: '#b30000', color: 'white', border: 'none', borderRadius: '5px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' }}
+          >
+            Entrar
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  // --- PAINEL LIBERADO (O código antigo fica aqui dentro) ---
   return (
     <main style={{ padding: '20px', fontFamily: 'sans-serif', backgroundColor: corFundoFundo, minHeight: '100vh', transition: 'background-color 0.3s ease' }}>
       
-      <div style={{ maxWidth: '600px', margin: '0 auto 15px auto', display: 'flex', justifyContent: 'flex-end' }}>
+      <div style={{ maxWidth: '600px', margin: '0 auto 15px auto', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
         <button onClick={() => setIsDark(!isDark)} style={{ padding: '8px 12px', borderRadius: '20px', border: '1px solid ' + corInputBorda, backgroundColor: corFundoCard, color: corTextoPrincipal, cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
-          {isDark ? '☀️ Tema Claro' : '🌙 Tema Escuro'}
+          {isDark ? '☀️ Claro' : '🌙 Escuro'}
+        </button>
+        {/* Botão para sair e bloquear a tela de novo */}
+        <button onClick={() => setAutenticado(false)} style={{ padding: '8px 12px', borderRadius: '20px', border: 'none', backgroundColor: '#ff4d4d', color: 'white', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+          Sair
         </button>
       </div>
 
